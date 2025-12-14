@@ -26,8 +26,9 @@ pip install -e .
 ```bash
 git clone https://github.com/findmalek/BLBypass.git
 cd BLBypass
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+python3 -m venv venv
+source venv/bin/activate # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e .
 ```

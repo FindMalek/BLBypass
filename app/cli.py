@@ -6,9 +6,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 
-from blbypass.api import BlackLightAPI
-from blbypass.parser import parse_license_data
-from blbypass.utils import (
+from app.api import BlackLightAPI
+from app.parser import parse_license_data
+from app.utils import (
     copy_to_clipboard,
     display_license_table,
     save_to_file,

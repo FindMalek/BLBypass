@@ -6,6 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "blbypass"
 version = "0.1.0"
 description = "CLI tool to automate BlackLight 3 trial extension requests"
+authors = [
+    {name = "Malek Gara-Hellal"}
+]
 requires-python = ">=3.8"
 dependencies = [
     "requests>=2.31.0",
@@ -18,4 +21,4 @@ dependencies = [
 ]
 
 [project.scripts]
-blbypass = "blbypass.cli:main"
+blbypass = "app.cli:main"
