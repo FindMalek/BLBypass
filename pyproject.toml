@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blbypass"
+version = "0.1.0"
+description = "CLI tool to automate BlackLight 3 trial extension requests"
+requires-python = ">=3.8"
+dependencies = [
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.0",
+    "pyperclip>=1.8.2",
+    "click>=8.1.7",
+    "rich>=13.7.0",
+    "python-dateutil>=2.8.2",
+    "lxml>=4.9.0",
+]
+
+[project.scripts]
+blbypass = "blbypass.cli:main"
