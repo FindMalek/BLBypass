@@ -28,9 +28,17 @@ console = Console()
 @click.option('--output', '-o', help='Save license to file (JSON format)')
 @click.option('--quiet', '-q', is_flag=True, help='Minimal output')
 @click.option('--auto', is_flag=True, help='Auto-generate fake name/email and copy step-by-step')
+@click.option('--retries', '-r', default=3, type=int, help='Number of retry attempts (default: 3)')
+@click.option('--retry-delay', default=5.0, type=float, help='Delay between retries in seconds (default: 5.0)')
+@click.option('--proxy', help='Proxy URL (e.g., http://proxy:port)')
+@click.option('--auto-proxy', is_flag=True, help='Automatically fetch and use proxies')
+@click.option('--delay', '-d', default=5.0, type=float, help='Delay between requests in seconds (default: 5.0, recommended: 10+ for safety)')
+@click.option('--proxy-source', default='proxyscrape', type=click.Choice(['proxyscrape', 'pubproxy']), 
+              help='Proxy source for auto-proxy (default: proxyscrape)')
 @click.pass_context
 def generate(ctx, name: Optional[str], email: Optional[str], lang: str, copy: bool, 
-             output: Optional[str], quiet: bool, auto: bool):
+             output: Optional[str], quiet: bool, auto: bool, delay: float, retries: int,
+             retry_delay: float, proxy: Optional[str], auto_proxy: bool, proxy_source: str):
     """Generate a trial license for BlackLight 3"""
     
     debug = ctx.obj.get('debug', False)
@@ -70,8 +78,17 @@ def generate(ctx, name: Optional[str], email: Optional[str], lang: str, copy: bo
             border_style="cyan"
         ))
     
-    # Request license
-    api = BlackLightAPI(lang=lang, debug=debug)
+    # Request license with retry logic
+    api = BlackLightAPI(
+        lang=lang, 
+        debug=debug, 
+        delay=delay,
+        retry_attempts=retries,
+        retry_delay=retry_delay,
+        proxy=proxy,
+        auto_proxy=auto_proxy,
+        proxy_source=proxy_source
+    )
     response = api.request_trial_license(name, email)
     
     if not response:
