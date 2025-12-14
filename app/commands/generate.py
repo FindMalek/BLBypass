@@ -33,6 +33,7 @@ console = Console()
 @click.option('--retry-delay', default=5.0, type=float, help='Delay between retries in seconds (default: 5.0)')
 @click.option('--proxy', help='Proxy URL (e.g., http://proxy:port)')
 @click.option('--auto-proxy', is_flag=True, help='Automatically fetch and use proxies')
+@click.option('--delay', '-d', default=5.0, type=float, help='Delay between requests in seconds (default: 5.0, recommended: 10+ for safety)')
 @click.option('--proxy-source', default='proxyscrape', type=click.Choice(['proxyscrape', 'pubproxy']), 
               help='Proxy source for auto-proxy (default: proxyscrape)')
 @click.pass_context
