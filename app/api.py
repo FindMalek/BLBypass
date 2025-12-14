@@ -19,15 +19,19 @@ class BlackLightAPI:
         self.debug = debug
         self.session = requests.Session()
         self.session.headers.update({
-            "accept": "*/*",
-            "accept-language": "en-US,en;q=0.9",
-            "content-type": "application/json",
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Content-Type": "application/json",
+            "Origin": "https://michelf.ca",
+            "Referer": "https://michelf.ca/projects/black-light/trial/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
             "sec-ch-ua": '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"macOS"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
         })
         
         if self.debug:
@@ -92,10 +96,28 @@ class BlackLightAPI:
                 logger.debug(f"Response data: {data}")
                 console.print(f"[dim]DEBUG:[/dim] Response data: {data}")
             
+            # Check for error response format: {"error": ["message", "error text"]}
+            if "error" in data:
+                error_list = data.get("error", [])
+                if isinstance(error_list, list) and len(error_list) >= 2:
+                    error_msg = error_list[1]  # Second element is the error message
+                else:
+                    error_msg = str(error_list)
+                if self.debug:
+                    console.print(f"[red]DEBUG:[/red] Error response: {data}")
+                console.print(f"[red]Error:[/red] {error_msg}")
+                return None
+            
+            # Check for success response
             if data.get("success"):
                 return data
             else:
-                error_msg = data.get('message', 'Unknown error')
+                # Try to get error message from various possible formats
+                error_msg = (
+                    data.get('message') or 
+                    data.get('error') or 
+                    str(data.get('error', 'Unknown error'))
+                )
                 if self.debug:
                     console.print(f"[red]DEBUG:[/red] Full response: {data}")
                 console.print(f"[red]Error:[/red] {error_msg}")
