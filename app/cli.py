@@ -1,5 +1,12 @@
 """Main CLI interface for BLBypass"""
 
+import warnings
+# Suppress urllib3 SSL warnings (common on macOS with LibreSSL)
+# Must be done before any urllib3/requests imports
+warnings.filterwarnings('ignore', category=UserWarning, module='urllib3')
+warnings.filterwarnings('ignore', message='.*urllib3.*')
+warnings.filterwarnings('ignore', message='.*NotOpenSSLWarning.*')
+
 import click
 import logging
 from typing import Optional

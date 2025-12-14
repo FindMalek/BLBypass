@@ -1,5 +1,10 @@
 """API client for BlackLight endpoints"""
 
+import warnings
+import urllib3
+# Disable urllib3 warnings completely
+urllib3.disable_warnings(urllib3.exceptions.NotOpenSSLWarning)
+
 import requests
 import logging
 from typing import Dict, Optional
