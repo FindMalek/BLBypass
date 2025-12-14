@@ -1,6 +1,7 @@
 """Main CLI interface for BLBypass"""
 
 import click
+import logging
 from typing import Optional
 from rich.console import Console
 from rich.panel import Panel
@@ -20,9 +21,19 @@ console = Console()
 
 @click.group()
 @click.version_option(version="0.1.0")
-def main():
+@click.option('--debug', is_flag=True, help='Enable debug logging')
+@click.pass_context
+def main(ctx, debug):
     """BLBypass - BlackLight 3 License Bypass Tool"""
-    pass
+    ctx.ensure_object(dict)
+    ctx.obj['debug'] = debug
+    
+    if debug:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        console.print("[yellow]Debug mode enabled[/yellow]")
 
 
 @main.command()
@@ -32,8 +43,11 @@ def main():
 @click.option('--copy', '-c', is_flag=True, help='Copy license code to clipboard')
 @click.option('--output', '-o', help='Save license to file (JSON format)')
 @click.option('--quiet', '-q', is_flag=True, help='Minimal output')
-def generate(name: Optional[str], email: Optional[str], lang: str, copy: bool, output: Optional[str], quiet: bool):
+@click.pass_context
+def generate(ctx, name: Optional[str], email: Optional[str], lang: str, copy: bool, output: Optional[str], quiet: bool):
     """Generate a trial license for BlackLight 3"""
+    
+    debug = ctx.obj.get('debug', False)
     
     # Interactive prompts if not provided
     if not name:
@@ -59,20 +73,25 @@ def generate(name: Optional[str], email: Optional[str], lang: str, copy: bool, o
         ))
     
     # Request license
-    api = BlackLightAPI(lang=lang)
+    api = BlackLightAPI(lang=lang, debug=debug)
     response = api.request_trial_license(name, email)
     
     if not response:
         console.print("[red]✗ Failed to generate license[/red]")
+        if debug:
+            console.print("[dim]DEBUG:[/dim] No response received from API")
         return
     
     # Parse license data
     license_data = parse_license_data(response.get("message", ""))
     
+    if debug:
+        console.print(f"[dim]DEBUG:[/dim] Parsed license data: {license_data}")
+    
     if not license_data.get("license_code"):
         console.print("[red]✗ Could not extract license code from response[/red]")
-        if not quiet:
-            console.print(f"[dim]Response: {response.get('message', '')[:200]}...[/dim]")
+        if not quiet or debug:
+            console.print(f"[dim]Response: {response.get('message', '')[:500]}...[/dim]")
         return
     
     # Display results
@@ -108,13 +127,16 @@ def generate(name: Optional[str], email: Optional[str], lang: str, copy: bool, o
 @click.option('--lang', '-l', default='en', help='Language code')
 @click.option('--output', '-o', required=True, help='Output file path')
 @click.option('--format', '-f', default='json', type=click.Choice(['json', 'csv']), help='Output format')
-def batch(count: int, lang: str, output: str, format: str):
+@click.pass_context
+def batch(ctx, count: int, lang: str, output: str, format: str):
     """Generate multiple licenses in batch mode"""
+    
+    debug = ctx.obj.get('debug', False)
     
     console.print(f"[cyan]Generating {count} license(s)...[/cyan]\n")
     
     licenses = []
-    api = BlackLightAPI(lang=lang)
+    api = BlackLightAPI(lang=lang, debug=debug)
     
     for i in range(count):
         console.print(f"[dim]Generating license {i+1}/{count}...[/dim]")
@@ -148,8 +170,11 @@ def batch(count: int, lang: str, output: str, format: str):
 @click.option('--pi', help='Payment Intent ID (experimental)')
 @click.option('--pics', help='Payment Intent Client Secret (experimental)')
 @click.option('--ps', help='Payment Session ID (experimental)')
-def full(name: str, email: str, pi: Optional[str], pics: Optional[str], ps: Optional[str]):
+@click.pass_context
+def full(ctx, name: str, email: str, pi: Optional[str], pics: Optional[str], ps: Optional[str]):
     """Attempt to generate a full license (EXPERIMENTAL/RESEARCH ONLY)"""
+    
+    debug = ctx.obj.get('debug', False)
     
     console.print(Panel(
         "[yellow]⚠ WARNING: EXPERIMENTAL FEATURE[/yellow]\n\n"
@@ -163,7 +188,7 @@ def full(name: str, email: str, pi: Optional[str], pics: Optional[str], ps: Opti
     if not Confirm.ask("\nContinue?"):
         return
     
-    api = BlackLightAPI()
+    api = BlackLightAPI(debug=debug)
     response = api.request_full_license(
         name=name,
         email=email,

@@ -1,10 +1,12 @@
 """API client for BlackLight endpoints"""
 
 import requests
+import logging
 from typing import Dict, Optional
 from rich.console import Console
 
 console = Console()
+logger = logging.getLogger(__name__)
 
 
 class BlackLightAPI:
@@ -12,8 +14,9 @@ class BlackLightAPI:
     
     BASE_URL = "https://michelf.ca/processus"
     
-    def __init__(self, lang: str = "en"):
+    def __init__(self, lang: str = "en", debug: bool = False):
         self.lang = lang
+        self.debug = debug
         self.session = requests.Session()
         self.session.headers.update({
             "accept": "*/*",
@@ -26,6 +29,15 @@ class BlackLightAPI:
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
         })
+        
+        if self.debug:
+            logging.basicConfig(
+                level=logging.DEBUG,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+            # Enable requests debug logging
+            import http.client
+            http.client.HTTPConnection.debuglevel = 1
     
     def request_trial_license(
         self, 
@@ -49,22 +61,78 @@ class BlackLightAPI:
             "email": email
         }
         
+        if self.debug:
+            logger.debug(f"Request URL: {url}")
+            logger.debug(f"Request payload: {payload}")
+            console.print(f"[dim]DEBUG:[/dim] POST {url}")
+            console.print(f"[dim]DEBUG:[/dim] Payload: {payload}")
+        
         try:
             response = self.session.post(url, json=payload, timeout=10)
+            
+            if self.debug:
+                logger.debug(f"Response status: {response.status_code}")
+                logger.debug(f"Response headers: {dict(response.headers)}")
+                logger.debug(f"Response text: {response.text[:500]}")
+                console.print(f"[dim]DEBUG:[/dim] Status: {response.status_code}")
+                console.print(f"[dim]DEBUG:[/dim] Headers: {dict(response.headers)}")
+            
             response.raise_for_status()
-            data = response.json()
+            
+            try:
+                data = response.json()
+            except ValueError as json_error:
+                if self.debug:
+                    console.print(f"[red]DEBUG:[/red] JSON decode error: {json_error}")
+                    console.print(f"[red]DEBUG:[/red] Response text: {response.text}")
+                console.print(f"[red]Invalid JSON response:[/red] {response.text[:200]}")
+                return None
+            
+            if self.debug:
+                logger.debug(f"Response data: {data}")
+                console.print(f"[dim]DEBUG:[/dim] Response data: {data}")
             
             if data.get("success"):
                 return data
             else:
-                console.print(f"[red]Error:[/red] {data.get('message', 'Unknown error')}")
+                error_msg = data.get('message', 'Unknown error')
+                if self.debug:
+                    console.print(f"[red]DEBUG:[/red] Full response: {data}")
+                console.print(f"[red]Error:[/red] {error_msg}")
                 return None
                 
-        except requests.exceptions.RequestException as e:
-            console.print(f"[red]Network error:[/red] {str(e)}")
+        except requests.exceptions.Timeout as e:
+            error_msg = f"Request timed out after 10 seconds: {str(e)}"
+            if self.debug:
+                logger.exception("Timeout error")
+            console.print(f"[red]Network error:[/red] {error_msg}")
             return None
-        except ValueError as e:
-            console.print(f"[red]Invalid response:[/red] {str(e)}")
+        except requests.exceptions.ConnectionError as e:
+            error_msg = f"Connection error: {str(e)}"
+            if self.debug:
+                logger.exception("Connection error")
+            console.print(f"[red]Network error:[/red] {error_msg}")
+            return None
+        except requests.exceptions.HTTPError as e:
+            error_msg = f"HTTP {e.response.status_code}: {str(e)}"
+            if self.debug:
+                logger.exception("HTTP error")
+                console.print(f"[red]DEBUG:[/red] Response text: {e.response.text[:500]}")
+            console.print(f"[red]HTTP error:[/red] {error_msg}")
+            if self.debug and hasattr(e, 'response'):
+                console.print(f"[dim]DEBUG:[/dim] Response body: {e.response.text[:500]}")
+            return None
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Request failed: {str(e)}"
+            if self.debug:
+                logger.exception("Request exception")
+            console.print(f"[red]Network error:[/red] {error_msg}")
+            return None
+        except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            if self.debug:
+                logger.exception("Unexpected error")
+            console.print(f"[red]Error:[/red] {error_msg}")
             return None
     
     def request_full_license(
@@ -129,13 +197,30 @@ class BlackLightAPI:
             "invoice_no": None
         }
         
+        if self.debug:
+            logger.debug(f"Request URL: {url}")
+            logger.debug(f"Request payload: {payload}")
+            console.print(f"[dim]DEBUG:[/dim] POST {url}")
+            console.print(f"[dim]DEBUG:[/dim] Payload: {payload}")
+        
         try:
             response = self.session.post(url, json=payload, timeout=10)
+            
+            if self.debug:
+                logger.debug(f"Response status: {response.status_code}")
+                logger.debug(f"Response text: {response.text[:500]}")
+                console.print(f"[dim]DEBUG:[/dim] Status: {response.status_code}")
+                console.print(f"[dim]DEBUG:[/dim] Response: {response.text[:500]}")
+            
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
+            if self.debug:
+                logger.exception("Request exception")
             console.print(f"[red]Network error:[/red] {str(e)}")
             return None
         except ValueError as e:
+            if self.debug:
+                logger.exception("JSON decode error")
             console.print(f"[red]Invalid response:[/red] {str(e)}")
             return None
