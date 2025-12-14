@@ -1,6 +1,8 @@
 # BlackLight License Bypass (BLBypass)
 
-A lightweight CLI tool to automate the generation and injection of BlackLight 3 trial extension requests. This tool allows you to bypass the trial period by programmatically generating and injecting license codes, so you can use BlackLight 3 indefinitely without purchasing a license.
+![](github.png)
+
+A lightweight CLI tool to automate the generation and injection of [BlackLight 3](https://michelf.ca/projects/black-light/) trial extension requests. This tool allows you to bypass the trial period by programmatically generating and injecting license codes, so you can use BlackLight 3 indefinitely without purchasing a license.
 
 ## Features
 
@@ -130,10 +132,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-## License
-
-MIT
 
 ## Disclaimer
 
